@@ -1,5 +1,7 @@
 import discord
 
+CHANNEL_ID = 1443981407704584202
+
 class Node:
     def __init__(self, value: str):
         self.value = value
@@ -36,6 +38,10 @@ histo_user: dict[int, CommandHistory] = {}
 class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user}')
+
+        channel = self.get_channel(CHANNEL_ID)
+        if channel is not None:
+            await channel.send("Pour voir les commandes disponibles, tape `/show`.")
     
     async def on_message(self, message):
         if message.author == self.user:
@@ -43,6 +49,17 @@ class Client(discord.Client):
         
         content = message.content.strip()
         user_id = message.author.id
+
+        if content.startswith('/show'):
+            await message.channel.send(
+                "- `/help` :\n"
+                "- `/last` : affiche la dernière commande que tu as envoyée.\n"
+                "- `/history` : affiche toutes tes commandes enregistrées (du plus ancien au plus récent).\n"
+                "- `/clear_history` : efface ton historique de commandes.\n"
+            )
+
+        elif content.startswith('/help'):
+            await message.channel.send("Le questionnaire `/help` n'est pas encore prêt.")
 
         if user_id not in histo_user:
             histo_user[user_id] = CommandHistory()
@@ -69,8 +86,6 @@ class Client(discord.Client):
         elif content.startswith("/clear_history"):
             history.clear()
             await message.channel.send("Historique Vidé.")
-
-
 
 intents = discord.Intents.default()
 intents.message_content = True
