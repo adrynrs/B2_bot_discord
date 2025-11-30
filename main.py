@@ -1,6 +1,9 @@
 import discord
+import json
+import os
 
 CHANNEL_ID = 1443981407704584202
+HISTORY_FILE = "histo_command.json"
 
 class Node:
     def __init__(self, value: str):
@@ -34,6 +37,31 @@ class CommandHistory:
         self.head = None
 
 histo_user: dict[int, CommandHistory] = {}     
+
+def save_history_to_JSON():
+    data: dict[str, list[str]] = {}
+    for user_id, history in histo_user.items():
+        data[str(user_id)] = history.get_all()
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def load_history_from_JSON():
+    if not os.path.exists(HISTORY_FILE):
+        return
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            return
+    for user_id_str, commands in data.items():
+        try:
+            user_id = int(user_id_str)
+        except ValueError:
+            continue
+        history = CommandHistory()
+        for command in commands:
+            history.add_command(command)
+        histo_user[user_id] = history    
 
 class TreeNode:
     def __init__(self, text: str, is_leaf: bool = False):
@@ -135,6 +163,7 @@ def speak_about_X(node: TreeNode, subject: str) -> bool:
 class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user}')
+        load_history_from_JSON()
 
         channel = self.get_channel(CHANNEL_ID)
         if channel is not None:
@@ -146,6 +175,14 @@ class Client(discord.Client):
         
         content = message.content.strip()
         user_id = message.author.id
+
+        if user_id not in histo_user:
+            histo_user[user_id] = CommandHistory()
+        history = histo_user[user_id]
+
+        if content.startswith("/"):
+            history.add_command(content)
+            save_history_to_JSON()
 
         if content.startswith('/show'):
             await message.channel.send(
@@ -169,6 +206,11 @@ class Client(discord.Client):
             await message.channel.send(root_node.text)
             return
         
+        elif content.startswith('/reset'):
+            user_positions[user_id] = root_node
+            await message.channel.send("On recommence :\n" + root_node.text)
+            return
+        
         elif content.lower().startswith('speak about '):
             subject = content[len('speak about '):].strip()
             if speak_about_X(root_node, subject):
@@ -176,13 +218,6 @@ class Client(discord.Client):
             else:
                 await message.channel.send("non")
             return
-
-        if user_id not in histo_user:
-            histo_user[user_id] = CommandHistory()
-        history = histo_user[user_id]
-
-        if content.startswith("/"):
-            history.add_command(content)
         
         if content.startswith("/last"):
             last = history.get_last()
@@ -201,7 +236,8 @@ class Client(discord.Client):
 
         elif content.startswith("/clear_history"):
             history.clear()
-            await message.channel.send("Historique Vidé.")
+            save_history_to_JSON()
+            await message.channel.send("Historique clear")
         
         if not content.startswith("/") and user_id in user_positions:
             current_node = user_positions[user_id]
@@ -220,8 +256,6 @@ class Client(discord.Client):
                     "Je n'ai pas compris ta réponse."
                     f"Tu dois choisir parmi : {', '.join(current_node.children.keys())}"
                 )
-        
-
 
 intents = discord.Intents.default()
 intents.message_content = True
