@@ -159,7 +159,47 @@ def speak_about_X(node: TreeNode, subject: str) -> bool:
         if speak_about_X(child, subject):
             return True
     return False
-    
+
+class GameState:
+    def __init__(self):
+        self.quest = 0
+        self.score = 0
+
+user_games: dict[int, GameState] = {}
+
+GAME_QUESTIONS = [
+    (
+        "HTML est un langage de programmation ?\n"
+        "Repond par `vrai` ou `faux`.",
+        False,
+        "HTML est un langage de balisage."
+    ),
+    (
+        "la couche 4 du modele osi est appeler couche transport ?\n"
+        "Repond par `vrai` ou `faux`.",
+        True,
+        "La couche 4 est bien la couche transport (ex : TCP/UDP)."
+    ),
+    (
+        "est-ce qu'un anti-virus permet d'être plus discret sur internet ?\n"
+        "Repond par `vrai` ou `faux`.",
+        False,
+        "Un anti-virus protege contre les malwares, mais n'assure pas l'anonymat."
+    ),
+    (
+        "Python est un langage interpreté ?\n"
+        "Repond par `vrai` ou `faux`.",
+        True,
+        "Python est généralement interprété."
+    ),
+    (
+        "Le routeur sert uniquement à se connecter au Wi-Fi ?\n"
+        "Repond par `vrai` ou `faux`.",
+        False,
+        "Un routeur fait bien plus, ce n'est pas sa seule fonction."
+    ),
+]
+
 class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user}')
@@ -187,6 +227,7 @@ class Client(discord.Client):
         if content.startswith('/show'):
             await message.channel.send(
                 "`/help` : QCM orientation pro\n"
+                "`/game` : lance un jeu Vrai/Faux sur l'informatique.\n"
                 "`/last` : affiche la dernière commande que tu as envoyée.\n"
                 "`/history` : affiche toutes tes commandes enregistrées (du plus ancien au plus récent).\n"
                 "`/clear_history` : efface ton historique de commandes.\n"
@@ -199,6 +240,16 @@ class Client(discord.Client):
                 "TU N'AS PAS FINI LE QUESTIONNAIRE:\n"
                     + current_node.text
                 )
+            return
+        
+        elif content.startswith('/game'):
+            user_games[user_id] = GameState()
+            game_state = user_games[user_id]
+            question, _, _ = GAME_QUESTIONS[game_state.quest]
+            await message.channel.send(
+                "Jeu Vrai/Faux lancé ! Réponds uniquement par `vrai` ou `faux`.\n\n"
+                f"Question 1/{len(GAME_QUESTIONS)} :\n{question}"
+            )
             return
 
         elif content.startswith('/help'):
@@ -238,6 +289,42 @@ class Client(discord.Client):
             history.clear()
             save_history_to_JSON()
             await message.channel.send("Historique clear")
+
+        if not content.startswith("/") and user_id in user_games:
+            state = user_games[user_id]
+            answer = content.lower()
+
+            if answer not in ("vrai", "faux"):
+                await message.channel.send("Réponds seulement par `vrai` ou `faux`.")
+                return
+            
+            question_text, correct_answer, explanation = GAME_QUESTIONS[state.quest]
+            user_is_true = (answer == "vrai")
+
+            if user_is_true == correct_answer:
+                state.score += 1
+                await message.channel.send("Bonne réponse !")
+            else:
+                await message.channel.send("Mauvaise réponse.")
+            await message.channel.send(explanation)
+
+            state.quest += 1
+
+            if state.quest >= len(GAME_QUESTIONS):
+                await message.channel.send(
+                    f"Jeu terminé ! Ton score : {state.score}/{len(GAME_QUESTIONS)}.\n"
+                    "Tape `/game` pour rejouer ou `/show` pour voir les commandes disponibles."
+                )
+                del user_games[user_id]
+
+            else:
+                next_question, _, _ = GAME_QUESTIONS[state.quest]
+                await message.channel.send(
+                    f"Question {state.quest + 1}/{len(GAME_QUESTIONS)} :\n{next_question}"
+                )
+            return
+        
+
         
         if not content.startswith("/") and user_id in user_positions:
             current_node = user_positions[user_id]
