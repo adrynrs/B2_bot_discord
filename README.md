@@ -63,7 +63,7 @@ Téléchargement :
 https://ffmpeg.org
 
 moi personnelement j'ai prix celui de gyan.dev comme conseiller dans cette video :
-https://www.youtube.com/watch?v=U5CUkxUh2CQ — timestamp utile : 0:35 pour l'installation.
+https://www.youtube.com/watch?v=U5CUkxUh2CQ — timestamp utile : 0:35 - 0:50 pour l'installation.
 
 Se que je fais ensuite c'est que je dezip le dossier et je copie le chemin de : `\bin\ffmpeg.exe`
 
