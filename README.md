@@ -62,6 +62,9 @@ Ce bot nécessite l'installation de **FFmpeg** pour pouvoir lire les fichiers au
 Téléchargement :
 https://ffmpeg.org
 
-Assure-toi que `ffmpeg.exe` son chemin est bien forcé dans le code via la variable `FFMPEG_PATH`.
+moi personnelement j'ai prix celui de gyan.dev comme conseiller dans cette video :
+https://www.youtube.com/watch?v=U5CUkxUh2CQ — timestamp utile : 0:35 pour l'installation.
 
-MOI SE QUE JE FAIS PERSO C'EST QUE JE DEZIP LE DOSSIER QUE T'INSTALLE VIA (https://ffmpeg.org) ET QUE JE COLLE LE CHEMIN DU FICHIER `\bin\ffmpeg.exe`
+Se que je fais ensuite c'est que je dezip le dossier et je copie le chemin de : `\bin\ffmpeg.exe`
+
+et ensuite il te reste plus cas le coller dans le code via la variable `FFMPEG_PATH`.
