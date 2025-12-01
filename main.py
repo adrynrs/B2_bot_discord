@@ -200,6 +200,66 @@ GAME_QUESTIONS = [
     ),
 ]
 
+DEFINITIONS = {
+    "vpn": (
+        "VPN (Réseau Privé Virtuel)\n"
+        "Un VPN permet de sécuriser une connexion Internet en créant un tunnel chiffré.\n"
+        "Utilité : protéger les données et accéder à un réseau à distance.\n"
+        "Exemple : se connecter au réseau de son entreprise depuis chez soi."
+    ),
+
+    "modele osi": (
+        "Modèle OSI\n"
+        "Modèle en 7 couches qui décrit le fonctionnement d’un réseau.\n"
+        "Utilité : comprendre et dépanner les communications réseau.\n"
+        "Exemple : la couche 4 correspond au transport (TCP/UDP)."
+    ),
+
+    "python": (
+        "Python\n"
+        "Langage de programmation interprété, simple et puissant.\n"
+        "Utilité : web, scripts, data, IA, automatisation.\n"
+        "Exemple : créer un bot Discord."
+    ),
+
+    "tcp": (
+        "TCP\n"
+        "Protocole de la couche transport du modèle OSI.\n"
+        "Utilité : assurer une communication fiable entre deux machines.\n"
+        "Exemple : navigation web, emails."
+    ),
+
+    "ip": (
+        "IP\n"
+        "Adresse unique qui identifie un appareil sur un réseau.\n"
+        "Utilité : permettre l’envoi et la réception de données.\n"
+        "Exemple : 192.168.1.10"
+    ),
+
+    "dhcp": (
+        "DHCP\n"
+        "Protocole qui attribue automatiquement des adresses IP.\n"
+        "Utilité : éviter la configuration manuelle.\n"
+        "Exemple : ton PC reçoit une IP en Wi-Fi automatiquement."
+    ),
+
+    "switch": (
+        "Switch\n"
+        "Équipement réseau reliant plusieurs appareils dans un réseau local.\n"
+        "Utilité : envoyer les données au bon destinataire.\n"
+        "Exemple : réseau de salle informatique."
+    ),
+
+    "routeur": (
+        "Routeur\n"
+        "Appareil qui relie plusieurs réseaux entre eux.\n"
+        "Utilité : faire communiquer le réseau local avec Internet.\n"
+        "Exemple : box Internet."
+    ),
+}
+
+
+
 class Client(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user}')
@@ -226,6 +286,7 @@ class Client(discord.Client):
 
         if content.startswith('/show'):
             await message.channel.send(
+                "`/def X` : affiche la définition d’un mot informatique (python, vpn, ip, switch, routeur, dhcp, tcp, modele osi)\n"
                 "`/help` : QCM orientation pro\n"
                 "`/game` : lance un jeu Vrai/Faux sur l'informatique.\n"
                 "`/last` : affiche la dernière commande que tu as envoyée.\n"
@@ -239,6 +300,18 @@ class Client(discord.Client):
                 await message.channel.send(
                 "TU N'AS PAS FINI LE QUESTIONNAIRE:\n"
                     + current_node.text
+                )
+            return
+        
+        elif content.lower().startswith('/def '):
+            mot = content[5:].strip().lower()
+
+            if mot in DEFINITIONS:
+                await message.channel.send(DEFINITIONS[mot])
+            else:
+                await message.channel.send(
+                    f"Je n'ai pas de définition pour `{mot}`.\n"
+                    "Mots disponibles : " + ", ".join(DEFINITIONS.keys())
                 )
             return
         
