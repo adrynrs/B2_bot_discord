@@ -1,7 +1,11 @@
 import discord
 import json
 import os
+import asyncio
+import datetime
 
+FFMPEG_PATH = r"" #chemin ffmpeg.exe a mettre dans les ""
+ALARM_SOUND = "son.mp3"
 CHANNEL_ID = 1443981407704584202
 HISTORY_FILE = "histo_command.json"
 
@@ -286,6 +290,7 @@ class Client(discord.Client):
 
         if content.startswith('/show'):
             await message.channel.send(
+                "`/alarme` : lance une alarme sonore a l'heure souhaitée dans le canal vocal.\n"
                 "`/def X` : affiche la définition d’un mot informatique (python, vpn, ip, switch, routeur, dhcp, tcp, modele osi)\n"
                 "`/help` : QCM orientation pro\n"
                 "`/game` : lance un jeu Vrai/Faux sur l'informatique.\n"
@@ -313,6 +318,71 @@ class Client(discord.Client):
                     f"Je n'ai pas de définition pour `{mot}`.\n"
                     "Mots disponibles : " + ", ".join(DEFINITIONS.keys())
                 )
+            return
+        
+        elif content.startswith('/alarme'):
+            parts = content.split()
+
+            if len(parts) != 2:
+                await message.channel.send("Utilise : `/alarme 07:30` AVEC L'HEURE SOUHAITÉE.")
+                return
+
+            heure = parts[1]
+
+            if message.author.voice is None:
+                await message.channel.send("Tu dois être dans un salon vocal pour setup l'alarme.")
+                return
+            
+            try:
+                h, m = map(int, heure.split(":"))
+            except ValueError:
+                await message.channel.send("Format d'heure invalide. Utilise : `/alarme 20:30`")
+                return
+            
+            now = datetime.datetime.now()
+            alarm_time = now.replace(hour=h, minute=m, second=0, microsecond=0)
+
+            if alarm_time <= now:
+                alarm_time += datetime.timedelta(days=1)
+            
+            delta = (alarm_time - now).total_seconds()
+            voice_channel = message.author.voice.channel
+
+            await message.channel.send(f"Alarme réglée pour {heure}. Je jouerai le son dans le canal vocal '{voice_channel.name}'.")
+
+            client = self
+
+            async def alarm_task():
+
+                await asyncio.sleep(delta)
+
+                try:
+                    voice_client = await voice_channel.connect()
+                except discord.ClientException:
+                    voice_client = message.guild.voice_client
+                
+                if voice_client is None:
+                    return
+
+                if not os.path.exists(ALARM_SOUND):
+                    await message.channel.send("Fichier `son.mp3` introuvable.")
+                    await voice_client.disconnect()
+                    return
+                
+                source = discord.FFmpegPCMAudio(
+                    ALARM_SOUND,
+                    executable=FFMPEG_PATH
+                )
+
+                voice_client.play(source)
+                await message.channel.send("C'est l'heure !")
+                
+                while voice_client.is_playing():
+                    await asyncio.sleep(1)
+
+                await voice_client.disconnect()
+    
+            client.loop.create_task(alarm_task())
             return
         
         elif content.startswith('/game'):
