@@ -26,6 +26,7 @@ Le projet est entièrement pédagogique.
 Installation de la librairie :
 ```bash
 pip install discord.py
+```
 
 ### PARTIE ALARME
 
@@ -40,6 +41,7 @@ Dans le terminal :
 
 ```bash
 pip install -U "discord.py[voice]"
+```
 
 Tu peux remplacer `son.mp3` par **n'importe quel fichier audio de ton choix**, à condition de :
 
